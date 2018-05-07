@@ -71,7 +71,11 @@ public class KuaiDailiFetcher extends AbstractFetcher<List<ProxyEntity>> {
                 ProxyEntity enity = new ProxyEntity();
                 enity.setIp(tds.get(0).text().trim());
                 enity.setPort(Integer.parseInt(tds.get(1).text()));
-                enity.setAgentType(tds.get(2).text().trim());
+                String type = tds.get(2).text().trim();
+                if(type.indexOf("高匿")<0) {
+                	continue;
+                }
+                enity.setAgentType(type);
                 enity.setLocation(tds.get(4).text().trim());
 
                 Date date = new Date();

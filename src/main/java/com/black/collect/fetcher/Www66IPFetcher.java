@@ -72,6 +72,10 @@ public class Www66IPFetcher extends AbstractFetcher<List<ProxyEntity>> {
                 enity.setIp(tds.get(0).text().trim());
                 enity.setPort(Integer.parseInt(tds.get(1).text()));
                 enity.setLocation(tds.get(2).text().trim());
+                String type = tds.get(3).text().trim();
+                if(type.indexOf("高匿")<0) {
+                	continue;
+                }
                 enity.setAgentType(tds.get(3).text().trim());
 
                 Date date = new Date();

@@ -1,7 +1,7 @@
 package com.black.collect.db.repositor;
 
-import com.black.collect.db.config.RedisConfiguration;
 import com.black.collect.entity.ProxyEntity;
+import com.black.web.base.utils.CommonUtil;
 import com.google.common.base.Strings;
 import org.springframework.data.redis.core.RedisTemplate;
 
@@ -12,15 +12,22 @@ import java.util.*;
  */
 public  class ProxyRepository {
 
-    private static  ProxyRepository REPOSITORY = new ProxyRepository();
+    private static  ProxyRepository REPOSITORY = null;
 
-    public static ProxyRepository getInstance(){return REPOSITORY;}
+    public static ProxyRepository getInstance(){
+    	if(REPOSITORY==null) {
+    		REPOSITORY = new ProxyRepository();
+    	}
+    	return REPOSITORY;
+    }
 
-    private ProxyRepository(){
+    @SuppressWarnings("unchecked")
+	private ProxyRepository(){
+    	this.redisTemplate = (RedisTemplate<String, ProxyEntity>) CommonUtil.getApplicationContext().getBean("redisTemplate");
         this.deleteAll();
     }
 
-    private RedisTemplate<String, ProxyEntity> redisTemplate = RedisConfiguration.getRedisTemplate();
+    private RedisTemplate<String, ProxyEntity> redisTemplate;
 
     public void save(ProxyEntity proxy) {
         proxy.setUsable(true);

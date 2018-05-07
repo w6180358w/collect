@@ -93,6 +93,10 @@ public class XichiDailiFetcher extends AbstractFetcher<List<ProxyEntity>> {
                 ProxyEntity enity = new ProxyEntity();
                 enity.setIp(tds.get(1).text().trim());
                 enity.setPort(Integer.parseInt(tds.get(2).text().trim()));
+                String type = tds.get(4).text().trim();
+                if(type.indexOf("高匿")<0) {
+                	continue;
+                }
                 enity.setAgentType(tds.get(4).text().trim());
                 enity.setLocation(tds.get(3).text().trim());
 

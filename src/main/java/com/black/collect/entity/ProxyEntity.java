@@ -7,7 +7,11 @@ import java.util.Date;
  * Created by hcdeng on 2017/6/30.
  */
 public  class ProxyEntity implements Serializable{
-    //ip	端口号	代理位置	代理类型	验证时间
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 8209011909589855056L;
+	//ip	端口号	代理位置	代理类型	验证时间
     private String ip;
     private int port;
     private String location;

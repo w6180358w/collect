@@ -27,10 +27,9 @@ public class FetchScheduler extends Scheduler {
 
         List<AbstractFetcher<List<ProxyEntity>>> fetchers =
                 Arrays.asList(
-                        new KuaiDailiFetcher(8),
-                        new Www66IPFetcher(8),
-                        new XichiDailiFetcher(8),
-                        new GoubanjiaFetcher(8)
+                        new KuaiDailiFetcher(1),
+                        new Www66IPFetcher(1),
+                        new XichiDailiFetcher(1)
                 );
 
 

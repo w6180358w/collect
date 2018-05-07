@@ -1,12 +1,15 @@
 package com.black.collect.utils;
 
-import com.black.collect.entity.ProxyEntity;
-import com.black.collect.fetcher.GoubanjiaFetcher;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.URL;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.*;
+import com.black.collect.entity.ProxyEntity;
 
 /**
  * Created by hcdeng on 17-7-3.
@@ -46,9 +49,9 @@ public class ProxyUtil {
             InetSocketAddress addr = new InetSocketAddress(ip, port);
             Proxy proxy = new Proxy(Proxy.Type.HTTP, addr);
             connection = (HttpURLConnection) url.openConnection(proxy);
-            connection.setConnectTimeout(4 * 1000);
+            connection.setConnectTimeout(3 * 1000);
             connection.setInstanceFollowRedirects(false);
-            connection.setReadTimeout(6 * 1000);
+            connection.setReadTimeout(3 * 1000);
             int rCode = connection.getResponseCode();
             useful =  rCode == 200;
         }catch (IOException e1){
