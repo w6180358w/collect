@@ -13,3 +13,4 @@ target/
 /.gradle
 /gradle
 /gradlew
+/logs/
