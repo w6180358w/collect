@@ -1,13 +1,13 @@
 package com.black.collect.schedule;
 
-import com.black.collect.db.repositor.ProxyRepository;
-import com.black.collect.entity.ProxyEntity;
-import jdk.nashorn.internal.parser.JSONParser;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import com.black.collect.db.repositor.ProxyRepository;
+import com.black.collect.entity.ProxyEntity;
 
 /**
  * Created by hcdeng on 2017/6/29.
