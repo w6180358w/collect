@@ -1,9 +1,22 @@
 package com.deng.pp;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import com.black.collect.entity.GoodsEntity;
 import com.black.collect.fetcher.AbstractFetcher;
 import com.black.collect.fetcher.GoubanjiaFetcher;
+import com.fasterxml.jackson.databind.util.JSONPObject;
+import com.google.gson.Gson;
 
 import cz.mallat.uasparser.OnlineUpdater;
 import cz.mallat.uasparser.UASparser;
@@ -16,6 +29,17 @@ import eu.bitwalker.useragentutils.UserAgent;
  * Created by hcdeng on 2017/6/29.
  */
 public class Main {
+	
+	private static final String[][] HEADERS = new String[][]{
+        {"Connection", "keep-alive"},
+        {"Cache-Control", "max-age=0"},
+        {"Upgrade-Insecure-Requests", "1"},
+        {"User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko)"},
+        {"Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"},
+        {"Accept-Encoding", "gzip, deflate, sdch"},
+        {"Accept-Language", "zh-CN,zh;q=0.8"},
+	};
+	
 	 static UASparser uasParser = null;
 	 // 初始化uasParser对象
 	 static {
@@ -27,7 +51,7 @@ public class Main {
 	 }
 	 
     public static void main(String[] args) throws IOException {
-    	UserAgent userAgent = UserAgent.parseUserAgentString("Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36 ");  
+    	/*UserAgent userAgent = UserAgent.parseUserAgentString("Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36 ");  
     	Browser browser = userAgent.getBrowser();  
     	OperatingSystem os = userAgent.getOperatingSystem();
     	System.out.println(browser.getName());
@@ -41,6 +65,105 @@ public class Main {
     	System.out.println("浏览器版本："+userAgentInfo.getBrowserVersionInfo());//
     	System.out.println("设备类型："+userAgentInfo.getDeviceType());
     	System.out.println("浏览器:"+userAgentInfo.getUaName());
-    	System.out.println("类型："+userAgentInfo.getType());
+    	System.out.println("类型："+userAgentInfo.getType());*/
+    	//System.getProperties().setProperty("http.proxyHost", "222.73.68.144");  
+    	//System.getProperties().setProperty("http.proxyPort", "8090");  
+    	
+    	String url = "https://s.taobao.com/search?q=%E5%B8%BD%E5%AD%90&style=grid";
+		Connection connection = Jsoup.connect(url);
+        for (String[] head : HEADERS) {
+            connection.header(head[0], head[1]);
+        }
+        connection.timeout(4000).followRedirects(true);
+        Document doc = connection.get();//执行
+        String html = doc.html();
+        List<String> urlList = new ArrayList<>();
+        
+     // 使用正则表达式将本页所有商品的id提取出来（JSON数据串）
+        Pattern pattern = Pattern.compile("\"auctionNids\":\\[.*?\\]");
+        Matcher matcher = pattern.matcher(html);
+
+        if (matcher.find()) {
+            // matcher.group()返回匹配到的子字符串
+            String string = matcher.group();
+
+            int start = string.indexOf('[');
+            String idStr = string.substring(start+1, string.length()-1);
+
+            for (String idStars : idStr.split(",")) {
+                String singleId = idStars.substring(1, idStars.length()-1);
+                urlList.add("https://item.taobao.com/item.htm?id=" + singleId + "&style=grid");
+            }
+        }
+        System.out.println("url："+urlList.size());
+        List<GoodsEntity> goodsList = new ArrayList<>();
+        //for (String id : urlList) {
+        for (int i=0;i<1;i++) {
+        	String id = "566377133352";
+    		System.out.println(id);
+    		connection = Jsoup.connect(getTBUrl(id));
+    		for (String[] head : HEADERS) {
+    			connection.header(head[0], head[1]);
+    		}
+    		connection.timeout(4000).followRedirects(true);
+    		Document doc1 = connection.get();//执行
+    		System.out.println(doc1.html());
+    		Elements els = doc1.getElementById("detail").getElementsByClass("tm-fcs-panel");
+    		if(els!=null && !els.isEmpty()) {
+    			goodsList.add(tmInit(doc1, id));
+    		}else {
+    			goodsList.add(tbInit(doc1, id));
+    		}
+    	}
+        System.out.println(new Gson().toJson(goodsList));
+        System.out.println("goods："+goodsList.size());
+    }
+    public static GoodsEntity tmInit(Document doc,String id) {
+    	GoodsEntity goods = new GoodsEntity();
+    	goods.setId(id);
+    	Element el = doc.getElementById("detail").getElementsByTag("h1").get(0);
+    	String subjectName = doc.getElementById("shopExtra")
+    			.getElementsByTag("a")
+    			.get(0).child(0)
+    			.html();
+        goods.setName(el.html());
+        goods.setSubjectName(subjectName);
+        goods.setSource("天猫");
+        goods.setUrl(getTBUrl(id));
+        goods.setDetail(getDetail(doc));
+        return goods;
+    }
+    
+    public static String getDetail(Document doc) {
+    	Elements attrs = doc.getElementById("attributes").getElementsByTag("ul").get(0).getElementsByTag("li");
+    	StringBuffer detail = new StringBuffer("");
+        for (Element ele : attrs) {
+        	String str = ele.html().replace("&nbsp;", "");
+        	detail.append(str+",");
+		}
+        return detail.toString();
+    }
+    
+    public static GoodsEntity tbInit(Document doc,String id) {
+    	GoodsEntity goods = new GoodsEntity();
+    	goods.setId(id);
+    	Element el = doc.getElementById("J_Title").child(0);
+    	String subjectName = null;
+    	Element shop = doc.getElementById("J_ShopInfo");
+    	if(shop!=null) {
+    		subjectName = shop.getElementsByClass("tb-shop-name").get(0).getElementsByTag("a").get(0).html();
+    	}
+    	
+        goods.setName(el.html());
+        goods.setSubjectName(subjectName);
+        goods.setSource("淘宝");
+        goods.setUrl(getTBUrl(id));
+        goods.setDetail(getDetail(doc));
+        return goods;
+    	
+    }
+    
+    public static String getTBUrl(String id) {
+    	return "https://item.taobao.com/item.htm?id=" + id + "&style=grid";
     }
 }

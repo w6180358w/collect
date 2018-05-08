@@ -1,19 +1,29 @@
 package com.black.web.controller;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.poi.ss.formula.functions.T;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.black.collect.entity.GoodsEntity;
 import com.black.web.base.bean.PageResponse;
+import com.black.web.base.service.POIService;
 import com.google.gson.Gson;
 
 @RestController
@@ -28,10 +38,14 @@ public class TestController{
         {"Accept-Encoding", "gzip, deflate, sdch"},
         {"Accept-Language", "zh-CN,zh;q=0.8"},
 	};
+	@Autowired
+	private POIService<T> poiService;
 	@GetMapping("/load")
-	@ResponseBody
-	public String test() throws Exception {
-		String url = "https://s.taobao.com/search?q=%E5%B8%BD%E5%AD%90&style=grid";
+	public String test(HttpServletResponse response,String name) throws Exception {
+    	System.getProperties().setProperty("http.proxyHost", "222.73.68.144");  
+    	System.getProperties().setProperty("http.proxyPort", "8090");  
+		String url = "https://s.taobao.com/search?q="+name+"&style=grid";
+		System.out.println("搜索商品："+name);
 		Connection connection = Jsoup.connect(url);
         for (String[] head : HEADERS) {
             connection.header(head[0], head[1]);
@@ -40,6 +54,7 @@ public class TestController{
         Document doc = connection.get();//执行
         String html = doc.html();
         List<String> urlList = new ArrayList<>();
+        
      // 使用正则表达式将本页所有商品的id提取出来（JSON数据串）
         Pattern pattern = Pattern.compile("\"auctionNids\":\\[.*?\\]");
         Matcher matcher = pattern.matcher(html);
@@ -53,11 +68,87 @@ public class TestController{
 
             for (String idStars : idStr.split(",")) {
                 String singleId = idStars.substring(1, idStars.length()-1);
-                urlList.add("https://item.taobao.com/item.htm?id=" + singleId + "&style=grid");
+                urlList.add(singleId);
             }
         }
-        return new Gson().toJson(
-        		new PageResponse<>(true, urlList));
+        System.out.println("搜索到商品地址数量："+urlList.size());
+        List goodsList = new ArrayList();
+        for (String id : urlList) {
+    		connection = Jsoup.connect(getTBUrl(id));
+    		for (String[] head : HEADERS) {
+    			connection.header(head[0], head[1]);
+    		}
+    		connection.timeout(4000).followRedirects(true);
+    		Document doc1 = connection.get();//执行
+    		Elements els = doc1.getElementById("detail").getElementsByClass("tm-fcs-panel");
+    		if(els!=null && !els.isEmpty()) {
+    			goodsList.add(tmInit(doc1, id));
+    		}else {
+    			goodsList.add(tbInit(doc1, id));
+    		}
+    	}
+        System.out.println("处理后数据："+new Gson().toJson(goodsList));
+        System.out.println("处理后商品数量："+goodsList.size());
+        response.setContentType("application/x-download");
+        response.setHeader("Content-Disposition", "attachment; filename="+name+".xls");  
+        String[] dataFields = new String[]{"id","name","source","detail","url"};
+		String[] columns = new String[]{"商品ID","商品名称","来源","商品详情","商品url"};
+        try {
+			this.poiService.exportExcel(goodsList, dataFields, response.getOutputStream(), columns, "yyyy-MM-dd");
+			response.flushBuffer();
+        } catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
     }
 	
+	 public static GoodsEntity tmInit(Document doc,String id) {
+    	GoodsEntity goods = new GoodsEntity();
+    	goods.setId(id);
+    	Element el = doc.getElementById("detail").getElementsByTag("h1").get(0);
+    	String subjectName = doc.getElementById("shopExtra")
+    			.getElementsByTag("a")
+    			.get(0).child(0)
+    			.html();
+        goods.setName(el.html());
+        goods.setSubjectName(subjectName);
+        goods.setSource("天猫");
+        goods.setUrl(getTBUrl(id));
+        goods.setDetail(getDetail(doc));
+        return goods;
+    }
+    
+    public static String getDetail(Document doc) {
+    	Elements attrs = doc.getElementById("attributes").getElementsByTag("ul").get(0).getElementsByTag("li");
+    	StringBuffer detail = new StringBuffer("");
+        for (Element ele : attrs) {
+        	String str = ele.html().replace("&nbsp;", "");
+        	detail.append(str+",");
+		}
+        return detail.toString();
+    }
+    
+    public static GoodsEntity tbInit(Document doc,String id) {
+    	GoodsEntity goods = new GoodsEntity();
+    	goods.setId(id);
+    	Element el = doc.getElementById("J_Title").child(0);
+    	String subjectName = null;
+    	Element shop = doc.getElementById("J_ShopInfo");
+    	if(shop!=null) {
+    		subjectName = shop.getElementsByClass("tb-shop-name").get(0).getElementsByTag("a").get(0).html();
+    	}
+    	
+        goods.setName(el.ownText());
+        goods.setSubjectName(subjectName);
+        goods.setSource("淘宝");
+        goods.setUrl(getTBUrl(id));
+        goods.setDetail(getDetail(doc));
+        return goods;
+    	
+    }
+    
+    public static String getTBUrl(String id) {
+    	return "https://item.taobao.com/item.htm?id=" + id + "&style=grid";
+    }
+    
 }
