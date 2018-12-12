@@ -16,9 +16,9 @@ public class DesUtil {
 	private final static String DES_IV = "Raysdata";
 	
     public static void main(String[] args) throws Exception {
-    	String key = DesUtil.encrypt("ucode=zhangxy", "455");
+    	String key = DesUtil.encrypt("C:\\Users\\HF-Tech\\Desktop\\pageoffice\\Samples4\\CallParentFunction\\doc", "455");
 		System.out.println(key);
-		System.out.println(DesUtil.decrypt(key, "555"));
+		System.out.println(DesUtil.decrypt(key, "455"));
     }
      
     /**

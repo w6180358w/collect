@@ -36,8 +36,8 @@ public class Application {
 		ApplicationContext app = SpringApplication.run(Application.class, args); 
 		CommonUtil.setApplicationContext(app);
 		
-		/*for(Scheduler schedule : schedules)
-            schedule.schedule();*/
+		for(Scheduler schedule : schedules)
+            schedule.schedule();
 	}
 	private CorsConfiguration buildConfig() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
