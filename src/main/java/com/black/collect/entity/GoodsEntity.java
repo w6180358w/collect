@@ -10,6 +10,7 @@ public class GoodsEntity {
 	private String subjectDetail;	//厂家详情
 	private String url;				//商品url
 	private String subjectUrl;		//厂家url
+	private String price;			//价格
 	public String getName() {
 		return name;
 	}
@@ -58,5 +59,14 @@ public class GoodsEntity {
 	public void setSubjectUrl(String subjectUrl) {
 		this.subjectUrl = subjectUrl;
 	}
-	
+	public String getPrice() {
+		return price;
+	}
+	public void setPrice(String price) {
+		this.price = price;
+	}
+	@Override
+	public String toString() {
+		return "{name:'"+name+"',price:'"+price+"',url:'"+url+"',subjectName:'"+subjectName+"',source:'"+source+"'}";
+	}
 }

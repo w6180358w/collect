@@ -9,6 +9,7 @@ import com.black.web.base.annotation.Unique;
 public class RaysMessage {
 
 	public static final String AUTH_VALIDATE = "权限验证错误，请联系管理员!";
+	public static final String NEWWORK_ERROR = "网络错误，请稍后重试!";
 	public static final String FIELD_VALIDATE = "字段唯一性验证错误!";
 	public static final String ILLEGAL = "非法参数";
 	public static final String ILLEGAL_KEY_COLUMN_NULL = "关键字列不能为空";
