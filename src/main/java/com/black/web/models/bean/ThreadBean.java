@@ -1,14 +1,17 @@
 package com.black.web.models.bean;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.black.collect.entity.GoodsEntity;
 import com.black.web.Logger.Logger;
+import com.black.web.base.bean.PageResponse;
 import com.black.web.base.enums.SyncEnum;
 import com.black.web.base.exception.RaysException;
 import com.black.web.base.utils.mail.Mail;
 import com.black.web.services.sync.SyncService;
+import com.google.gson.Gson;
 
 public class ThreadBean extends Thread{
 	
@@ -40,22 +43,24 @@ public class ThreadBean extends Thread{
 		ThreadBean that = this;
 		endTime = startTime+time*60*1000;
 		Logger.info("START:采集线程["+that.getName()+"]开始采集数据:[开始时间:{},目标站:{},目标采集数量:{},目标采集时间(分钟):{},发送邮箱:{}]",startTime,this.service,this.count,this.time,this.mail);
-		//开启时间监听线程
-		new Thread(()->{
-			Logger.info("-------------采集监控线程["+this.getName()+"]开启-------------");
-			//如果当前时间大于停止时间  调用shutdown方法
-			while(System.currentTimeMillis() <= endTime) {
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+		//如果执行时间不为空  则开启时间监听线程
+		if(this.time!=null &&this.time>0) {
+			new Thread(()->{
+				Logger.info("-------------采集监控线程["+this.getName()+"]开启-------------");
+				//如果当前时间大于停止时间  调用shutdown方法
+				while(System.currentTimeMillis() <= endTime) {
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
 				}
-			}
-			Logger.info("-------------当前时间大于规定采集结束时间，调用采集线程["+this.getName()+"]关闭方法-------------");
-			//采集服务的shutdown方法  shutdown逻辑自己实现
-			that.service.shutdown();
-			Logger.info("-------------采集监控线程["+this.getName()+"]关闭-------------");
-		}).start();
+				Logger.info("-------------当前时间大于规定采集结束时间，调用采集线程["+this.getName()+"]关闭方法-------------");
+				//采集服务的shutdown方法  shutdown逻辑自己实现
+				that.service.shutdown();
+				Logger.info("-------------采集监控线程["+this.getName()+"]关闭-------------");
+			}).start();
+		}
 		
 		//主线程开始采集程序
 		try {
@@ -88,6 +93,7 @@ public class ThreadBean extends Thread{
 		}
 		endTime = 0l;
 		Logger.info("END:采集线程["+this.getName()+"]关闭,任务结束");
+		ThreadProcessPool.process.remove(that.getName());
 	}
 
 	@Override
@@ -96,36 +102,35 @@ public class ThreadBean extends Thread{
 		super.start();
 	}
 	
+	public String getProcess() {
+		Double process = 0d;
+		//如果以数量为主  计算当前数量与总数量
+		if(count!=null && count>0) {
+			process = data.size()%count.doubleValue();
+			return new Gson().toJson(new PageResponse<Object>(true, "",new DecimalFormat("0.00").format(process)));
+		}else 
+		//如果以时间为主  根据开始时间计算已运行时间  再与总时间计算
+		if(time!=null && time>0) {
+			Long after = System.currentTimeMillis()-startTime;
+			process = after.doubleValue()%(time*60*1000);
+		}
+		return new Gson().toJson(new PageResponse<Object>(true, "",new DecimalFormat("0.00").format(process)));
+	}
+	
 	public String getS() {
 		return s;
-	}
-
-	public void setS(String s) {
-		this.s = s;
 	}
 
 	public Integer getCount() {
 		return count;
 	}
 
-	public void setCount(Integer count) {
-		this.count = count;
-	}
-
 	public Integer getTime() {
 		return time;
 	}
 
-	public void setTime(Integer time) {
-		this.time = time;
-	}
-
 	public List<GoodsEntity> getData() {
 		return data;
-	}
-
-	public void setData(List<GoodsEntity> data) {
-		this.data = data;
 	}
 	
 }

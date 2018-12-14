@@ -1,6 +1,7 @@
 package com.black.web.controller;
 
 import java.io.IOException;
+import java.lang.Thread.State;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -29,6 +30,7 @@ import com.black.web.base.bean.PageResponse;
 import com.black.web.base.enums.SyncEnum;
 import com.black.web.base.service.POIService;
 import com.black.web.models.bean.ThreadBean;
+import com.black.web.models.bean.ThreadProcessPool;
 import com.black.web.models.po.User;
 import com.google.gson.Gson;
 
@@ -160,13 +162,32 @@ public class TestController{
     
     @PostMapping("/collect/{s}/{count}/{time}")
 	@ResponseBody
-	public String update(@RequestParam("mail") String mail,
+	public String collect(@RequestParam("mail") String mail,
 			@PathVariable("s") String s,
-			@PathVariable("count") Integer count,
-			@PathVariable("time") Integer time,
+			@PathVariable(name="count",required=false) Integer count,
+			@PathVariable(name="time",required=false) Integer time,
 			@RequestParam ("type")String type) throws Exception {
-		new ThreadBean(s, count, time, mail, SyncEnum.valueOf(type.toUpperCase())).start();
+    	if(count==null && time==null) {
+    		count = 1;
+    	}
+    	ThreadBean bean = new ThreadBean(s, count, time, mail, SyncEnum.valueOf(type.toUpperCase()));
+    	ThreadProcessPool.process.put(bean.getName(), bean);
+    	bean.start();
         return new Gson().toJson(
-				new PageResponse<String>(true));
+				new PageResponse<Object>(true,"任务已创建",bean.getName()));
+    }
+    
+    @GetMapping("/process/{id}")
+   	@ResponseBody
+   	public String process(@PathVariable("id") String id) throws Exception {
+    	ThreadBean bean = ThreadProcessPool.process.get(id);
+    	if(bean!=null) {
+    		if(bean.getState().compareTo(State.TERMINATED)==0) {
+    			return new Gson().toJson(new PageResponse<Object>(true,"","100.00"));
+    		}
+    		System.out.println(bean.getState().name());
+    		return bean.getProcess();
+    	}
+    	return new Gson().toJson(new PageResponse<Object>(false,"编号为【"+id+"】的任务未创建或已结束"));
     }
 }
