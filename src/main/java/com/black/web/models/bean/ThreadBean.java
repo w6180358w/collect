@@ -55,7 +55,7 @@ public class ThreadBean extends Thread{
 		
 		//主线程开始采集程序
 		try {
-			this.service.sync(data);
+			this.service.sync(data,s);
 		} catch (Exception e) {
 			//结束时间控制为0  为了停止监听线程
 			System.out.println("采集报错,设置监听时间为0");

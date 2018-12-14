@@ -111,7 +111,7 @@ public class Main {
         });*/
     	
     	new ThreadBean("帽子", 2, 1, "", SyncEnum.TAOBAO).start();
-    	//new TaobaoSyncServiceImpl().sync(new ArrayList<>());
+    	//new TaobaoSyncServiceImpl().sync(new ArrayList<>(),"帽子");
     }
     
     public static void oldCollect() throws IOException {

@@ -10,7 +10,7 @@ public abstract class BaseSyncServiceImpl implements SyncService{
 	protected boolean shutdown;
 	
 	@Override
-	public abstract void sync(List<GoodsEntity> data) throws Exception ;
+	public abstract void sync(List<GoodsEntity> data,String key) throws Exception ;
 
 	@Override
 	public void shutdown() {

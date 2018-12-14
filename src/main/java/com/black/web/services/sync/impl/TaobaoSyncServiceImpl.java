@@ -16,7 +16,7 @@ import com.black.collect.entity.GoodsEntity;
 public class TaobaoSyncServiceImpl extends BaseSyncServiceImpl{
 
 	@Override
-	public void sync(List<GoodsEntity> data) throws Exception {
+	public void sync(List<GoodsEntity> data,String key) throws Exception {
 		System.setProperty("webdriver.chrome.driver", "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe");
     	ChromeOptions options = new ChromeOptions();
 
@@ -27,15 +27,17 @@ public class TaobaoSyncServiceImpl extends BaseSyncServiceImpl{
     	WebDriver driver = new ChromeDriver(options);
     	driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
     	driver.get("https://login.taobao.com/member/login.jhtml?spm=a21bo.2017.754894437.1.5af911d9bFsMVv&f=top&redirectURL=https%3A%2F%2Fwww.taobao.com%2F");
-    	
+    	//移动滑块
         move(driver);
         
-        WebElement submit = driver.findElement(By.xpath("//*[@id=\"J_SubmitStatic\"]"));
-        submit.click();
-        
-        driver.findElement(By.xpath("//*[@id=\"q\"]")).sendKeys("帽子");
+        //登录
+        driver.findElement(By.xpath("//*[@id=\"J_SubmitStatic\"]")).click();
+        //输入搜索条件
+        driver.findElement(By.xpath("//*[@id=\"q\"]")).sendKeys(key);
+        Thread.sleep(500);
+        //点击搜索按钮
         driver.findElement(By.xpath("//*[@id=\"J_TSearchForm\"]/div[1]/button")).click();
-        
+        //获取所有商品节点  解析
         List<WebElement> items = driver.findElement(By.xpath("//*[@id=\"mainsrp-itemlist\"]/div/div/div[1]")).findElements(By.className("item"));
         items.forEach(item->{
         	if(!shutdown) {
@@ -74,16 +76,21 @@ public class TaobaoSyncServiceImpl extends BaseSyncServiceImpl{
     	
     	WebElement username = driver.findElement(By.xpath("//*[@id=\"TPL_username_1\"]"));
         username.sendKeys("w6180358w");
+        Thread.sleep(1000);
         WebElement password = driver.findElement(By.xpath("//*[@id=\"TPL_password_1\"]"));
         password.sendKeys("z5754784");
-        WebElement form = driver.findElement(By.xpath("//*[@id=\"J_Form\"]"));
-        form.click();
+        /*WebElement form = driver.findElement(By.xpath("//*[@id=\"J_Form\"]"));
+        form.click();*/
+        
+        Thread.sleep(1000);
         
     	WebElement drop = driver.findElement(By.xpath("//*[@id=\"nc_1_n1z\"]"));
+    	
         Actions actions = new Actions(driver);
         actions.clickAndHold(drop).perform();
-        Thread.sleep(200);
+        Thread.sleep(1000);
         actions.moveByOffset(drop.getLocation().getX()+800, drop.getLocation().getY()).perform();
+        Thread.sleep(1000);
     }
 
 }
