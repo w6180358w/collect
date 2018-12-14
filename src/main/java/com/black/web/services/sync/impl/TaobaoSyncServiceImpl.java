@@ -4,32 +4,33 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
 
 import com.black.collect.entity.GoodsEntity;
+import com.black.web.Logger.Logger;
 
 public class TaobaoSyncServiceImpl extends BaseSyncServiceImpl{
 
 	@Override
-	public void sync(List<GoodsEntity> data,String key,Integer count) throws Exception {
-		System.setProperty("webdriver.chrome.driver", "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe");
-    	ChromeOptions options = new ChromeOptions();
-
-    	//options.addArguments("--proxy-server=127.0.0.1:8001");
-    	//options.addArguments("headless");
-    	options.addArguments("no-sandbox");
-    	options.addArguments("--start-maximized");
-    	WebDriver driver = new ChromeDriver(options);
-    	driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
-    	driver.get("https://login.taobao.com/member/login.jhtml?spm=a21bo.2017.754894437.1.5af911d9bFsMVv&f=top&redirectURL=https%3A%2F%2Fwww.taobao.com%2F");
+	public void doSync(WebDriver driver, List<GoodsEntity> data,String key,Integer count) throws Exception {
+		//点击登陆页签
+		driver.findElement(By.xpath("//*[@id=\"J_LoginBox\"]/div[1]/div[1]")).click();
+		//用户名
+    	WebElement username = driver.findElement(By.xpath("//*[@id=\"TPL_username_1\"]"));
+        username.sendKeys(this.getProperty("taobao.username"));
+        Thread.sleep(1000);
+        //密码
+        WebElement password = driver.findElement(By.xpath("//*[@id=\"TPL_password_1\"]"));
+        password.sendKeys(this.getProperty("taobao.password"));
+        /*WebElement form = driver.findElement(By.xpath("//*[@id=\"J_Form\"]"));
+        form.click();*/
+        
+        Thread.sleep(1000);
+        
     	//移动滑块
         move(driver);
-        
         //登录
         driver.findElement(By.xpath("//*[@id=\"J_SubmitStatic\"]")).click();
         //输入搜索条件
@@ -61,39 +62,42 @@ public class TaobaoSyncServiceImpl extends BaseSyncServiceImpl{
         	}
         });
         
-        driver.close();
-        driver.quit();
         //driver.findElement(By.xpath("//*[@id=\"J_Itemlist_TLink_522997440305\"]")).click();
 	}
 	
-	private void move(WebDriver driver) throws InterruptedException {
-    	((JavascriptExecutor) driver).executeScript(
-    			"    console.log(window.navigator.webdriver);"+
-    			"    Object.defineProperties(navigator,{" + 
-    			"        webdriver:{" + 
-    			"            get:() => false" + 
-    			"        }" + 
-    			"    });"+
-    			"    console.log(window.navigator.webdriver);");
-    	driver.findElement(By.xpath("//*[@id=\"J_LoginBox\"]/div[1]/div[1]")).click();
-    	
-    	WebElement username = driver.findElement(By.xpath("//*[@id=\"TPL_username_1\"]"));
-        username.sendKeys("w6180358w");
-        Thread.sleep(1000);
-        WebElement password = driver.findElement(By.xpath("//*[@id=\"TPL_password_1\"]"));
-        password.sendKeys("z5754784");
-        /*WebElement form = driver.findElement(By.xpath("//*[@id=\"J_Form\"]"));
-        form.click();*/
-        
-        Thread.sleep(1000);
-        
-    	WebElement drop = driver.findElement(By.xpath("//*[@id=\"nc_1_n1z\"]"));
-    	
+	private void move(WebDriver driver) throws Exception {
+		
+		doMove(driver);
+		
+        try {
+        	driver.manage().timeouts().implicitlyWait(1, TimeUnit.SECONDS);
+			WebElement refresh = driver.findElement(By.xpath("//*[@id=\"nocaptcha\"]/div/span/a"));
+			refresh.click();
+			doMove(driver);
+		} catch (Exception e) {
+			Logger.info("滑块验证成功!");
+		}
+        driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+        return;
+    }
+
+	private void doMove(WebDriver driver) throws Exception {
+		WebElement drop = driver.findElement(By.xpath("//*[@id=\"nc_1_n1z\"]"));
         Actions actions = new Actions(driver);
         actions.clickAndHold(drop).perform();
         Thread.sleep(1000);
-        actions.moveByOffset(drop.getLocation().getX()+800, drop.getLocation().getY()).perform();
-        Thread.sleep(1000);
-    }
+        actions.moveByOffset(drop.getLocation().getX()+50, drop.getLocation().getY()).perform();
+        Thread.sleep(500);
+	}
+	
+	@Override
+	protected String getUrl() {
+		return "https://login.taobao.com/member/login.jhtml?spm=a21bo.2017.754894437.1.5af911d9bFsMVv&f=top&redirectURL=https%3A%2F%2Fwww.taobao.com%2F";
+	}
+
+	@Override
+	public String getType() {
+		return "淘宝";
+	}
 
 }

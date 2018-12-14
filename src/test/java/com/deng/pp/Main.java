@@ -110,7 +110,7 @@ public class Main {
         	 System.out.println(title);
         });*/
     	
-    	new ThreadBean("帽子", 2, 1, "272416634@qq.com", SyncEnum.TAOBAO).start();
+    	//new ThreadBean("帽子", 2, 1, "272416634@qq.com", SyncEnum.TAOBAO).start();
     	//new TaobaoSyncServiceImpl().sync(new ArrayList<>(),"帽子");
     }
     

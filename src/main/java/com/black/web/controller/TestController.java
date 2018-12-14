@@ -29,6 +29,7 @@ import com.black.collect.entity.GoodsEntity;
 import com.black.web.base.bean.PageResponse;
 import com.black.web.base.enums.SyncEnum;
 import com.black.web.base.service.POIService;
+import com.black.web.models.bean.CollectBean;
 import com.black.web.models.bean.ThreadBean;
 import com.black.web.models.bean.ThreadProcessPool;
 import com.black.web.models.po.User;
@@ -160,21 +161,17 @@ public class TestController{
     	return "https://item.taobao.com/item.htm?id=" + id + "&style=grid";
     }
     
-    @PostMapping("/collect/{s}/{count}/{time}")
+    @PostMapping("/collect")
 	@ResponseBody
-	public String collect(@RequestParam("mail") String mail,
-			@PathVariable("s") String s,
-			@PathVariable(name="count",required=false) Integer count,
-			@PathVariable(name="time",required=false) Integer time,
-			@RequestParam ("type")String type) throws Exception {
-    	if(count==null && time==null) {
-    		count = 1;
+	public String collect(@RequestBody CollectBean bean) throws Exception {
+    	if(bean.getCount()==null && bean.getTime()==null) {
+    		bean.setCount(1);
     	}
-    	ThreadBean bean = new ThreadBean(s, count, time, mail, SyncEnum.valueOf(type.toUpperCase()));
-    	ThreadProcessPool.process.put(bean.getName(), bean);
-    	bean.start();
+    	ThreadBean tbean = new ThreadBean(bean);
+    	ThreadProcessPool.process.put(tbean.getName(), tbean);
+    	tbean.start();
         return new Gson().toJson(
-				new PageResponse<Object>(true,"任务已创建",bean.getName()));
+				new PageResponse<Object>(true,"任务已创建",tbean.getName()));
     }
     
     @GetMapping("/process/{id}")

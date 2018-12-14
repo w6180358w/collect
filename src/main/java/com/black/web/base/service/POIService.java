@@ -109,4 +109,14 @@ public interface POIService<T>{
 	 */
 	void exportExcel(Collection<T> dataSet, String[] dataFields,
 			OutputStream out, String[] columns, String timePattern);
+	/**
+	 * 数据导出流
+	 * @param dataSet 要导出的数据集
+	 * @param dataFields bean属性集
+	 * @param out	输出流
+	 * @param columns excel列头
+	 * @param timePattern 时间单元格样式
+	 */
+	InputStream exportExcelInputStream(Collection<T> dataSet, String[] dataFields, String[] columns,
+			String timePattern);
 }

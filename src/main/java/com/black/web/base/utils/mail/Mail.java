@@ -1,5 +1,7 @@
 package com.black.web.base.utils.mail;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -53,7 +55,7 @@ public class Mail {
 		mailSession = Session.getInstance(mailProperties,auth);
 		mailSession.setDebug(true);
 		mailMessage = new MimeMessage(mailSession);
-		multipart = new MimeMultipart();
+		multipart = new MimeMultipart("mixed");
 		bodypartArrayList = new ArrayList<BodyPart>();// 用来存放BodyPart，可以有多个BodyPart！
 	}
 	// 设置邮件主题
@@ -110,6 +112,23 @@ public class Mail {
 		displayfilename = MimeUtility.encodeWord(DisplayFileName, "gb2312",
 				null);// 对显示名称进行编码，否则会出现乱码！
 
+		bodypart.setFileName(displayfilename);// 可以和原文件名不一致
+		bodypart.setDataHandler(dh);
+		bodypartArrayList.add(bodypart);
+	}
+	
+	// 将流作为文件添加为附件
+	public void addAttachmentFrombyte(InputStream in/* 附件文件的字节数组 */,
+			String DisplayFileName/* 在邮件中想要显示的文件名 */) throws MessagingException,
+	IOException {
+		BodyPart bodypart = new MimeBodyPart();
+		ByteArrayDataSource fds = new ByteArrayDataSource(in, "application/vnd.ms-excel");
+		
+		DataHandler dh = new DataHandler(fds);
+		String displayfilename = "";
+		displayfilename = MimeUtility.encodeWord(DisplayFileName, "gb2312",
+				null);// 对显示名称进行编码，否则会出现乱码！
+		
 		bodypart.setFileName(displayfilename);// 可以和原文件名不一致
 		bodypart.setDataHandler(dh);
 		bodypartArrayList.add(bodypart);
@@ -173,10 +192,11 @@ public class Mail {
 	}
 	
 	public static void main(String[] args) throws Exception{
-		Mail mail = new Mail("smtp.exmail.qq.com", "25", "zhangxy@raysdata.com", "z5754784");
+		Mail mail = new Mail("smtp.exmail.qq.com", "25", "272416634@qq.com", "ZXY15568085566.");
 		mail.setMailFrom("zhangxy@raysdata.com");
 		mail.setMailTo(new String[]{"272416634@qq.com"}, "to");
 		mail.addTextContext("测试邮件");
+		mail.addAttachment("f:\\1.docx", "采集.docx");
 		mail.sendMail();
 	}
 }

@@ -14,4 +14,10 @@ public interface SyncService {
 	 */
 	public void shutdown();
 	
+	/**
+	 * 获取当前采集类型
+	 * @return
+	 */
+	public String getType();
+	
 }

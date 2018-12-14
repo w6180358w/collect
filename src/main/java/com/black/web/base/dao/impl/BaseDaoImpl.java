@@ -55,7 +55,7 @@ import com.black.web.models.po.User;
 
 @Repository
 public class BaseDaoImpl implements BaseDao{
-private Gson gson = new Gson();
+	private Gson gson = new Gson();
 	
 	@Autowired
 	private SessionFactory sessionFactory;

@@ -1,5 +1,7 @@
 package com.black.web.base.service.impl;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -17,15 +19,10 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFClientAnchor;
-import org.apache.poi.hssf.usermodel.HSSFComment;
 import org.apache.poi.hssf.usermodel.HSSFFont;
-import org.apache.poi.hssf.usermodel.HSSFPatriarch;
 import org.apache.poi.hssf.usermodel.HSSFRichTextString;
-import org.apache.poi.hssf.usermodel.HSSFRow;
-import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.Cell;
@@ -33,6 +30,15 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFClientAnchor;
+import org.apache.poi.xssf.usermodel.XSSFComment;
+import org.apache.poi.xssf.usermodel.XSSFDrawing;
+import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFRichTextString;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
@@ -259,18 +265,18 @@ public class POIServiceImpl<T> implements POIService<T>{
 		this.isAllowBlankRow=isAllow;		
 	}
 	
-	HSSFSheet export_sheet=null;// 表格
-	HSSFCellStyle headStyle=null;//列头单元格样式
-	HSSFCellStyle contentStyle=null;//内容单元格样式
-	HSSFPatriarch patriarch=null;//画图的顶级管理器
-	HSSFWorkbook workbook=null;// 工作薄
+	XSSFSheet export_sheet=null;// 表格
+	XSSFCellStyle headStyle=null;//列头单元格样式
+	XSSFCellStyle contentStyle=null;//内容单元格样式
+	XSSFDrawing patriarch=null;//画图的顶级管理器
+	XSSFWorkbook workbook=null;// 工作薄
 	int rowCount=0;
 	
 	public void initService ()
 	{		
 		sheetCount=0;
 		sheetCount++;
-		workbook = new HSSFWorkbook();		
+		workbook = new XSSFWorkbook();		
 		export_sheet = workbook.createSheet("sheet"+sheetCount);	
 		headStyle= workbook.createCellStyle();
 		headStyle.setFillForegroundColor(HSSFColor.SKY_BLUE.index);
@@ -281,7 +287,7 @@ public class POIServiceImpl<T> implements POIService<T>{
 		headStyle.setBorderTop(HSSFCellStyle.BORDER_THIN);
 		headStyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);
 
-		HSSFFont headfont = workbook.createFont();
+		XSSFFont headfont = workbook.createFont();
 		headfont.setColor(HSSFColor.VIOLET.index);
 		headfont.setFontHeightInPoints((short) 12);
 		headfont.setBoldweight(HSSFFont.BOLDWEIGHT_BOLD);
@@ -297,17 +303,17 @@ public class POIServiceImpl<T> implements POIService<T>{
 		contentStyle.setAlignment(HSSFCellStyle.ALIGN_CENTER);
 		contentStyle.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);
 
-		HSSFFont contenFont = workbook.createFont();
+		XSSFFont contenFont = workbook.createFont();
 		contenFont.setBoldweight(HSSFFont.BOLDWEIGHT_NORMAL);
 		contentStyle.setFont(contenFont);
 
 		// 创建一个画图的顶级管理器
 		patriarch = export_sheet.createDrawingPatriarch();
 
-		HSSFComment comment = patriarch.createComment(new HSSFClientAnchor(0,
+		XSSFComment comment = patriarch.createCellComment(new XSSFClientAnchor(0,
 				0, 0, 0, (short) 4, 2, (short) 6, 5));
 
-		comment.setString(new HSSFRichTextString("可以在POI中添加注释！"));
+		comment.setString(new XSSFRichTextString("可以在POI中添加注释！"));
 		comment.setAuthor("leno");
 	}
 	
@@ -318,9 +324,9 @@ public class POIServiceImpl<T> implements POIService<T>{
 			OutputStream out, String[] columns, String timePattern) {
 		initService();
 		int index = 0;
-		HSSFFont font = workbook.createFont();
+		XSSFFont font = workbook.createFont();
 		font.setColor(HSSFColor.BLACK.index);
-		HSSFRow row = export_sheet.createRow(0);
+		XSSFRow row = export_sheet.createRow(0);
 		setHeaders(columns, row);
 		Iterator<T> it = dataSet.iterator();
 		while (it.hasNext()) {
@@ -330,14 +336,14 @@ public class POIServiceImpl<T> implements POIService<T>{
 				index = 0;
 				sheetCount++;
 				export_sheet = workbook.createSheet("sheet"+sheetCount);
-				HSSFRow row1 = export_sheet.createRow(0);
+				XSSFRow row1 = export_sheet.createRow(0);
 				setHeaders(columns, row1);
 			}			
 			index++;
 			row = export_sheet.createRow(index);
 			T t = (T) it.next();
 			for (short i = 0; i < dataFields.length; i++) {
-				HSSFCell cell = row.createCell(i);
+				XSSFCell cell = row.createCell(i);
 				cell.setCellStyle(contentStyle);
 				Field field = null;
 				Class clazz = t.getClass();
@@ -427,7 +433,152 @@ public class POIServiceImpl<T> implements POIService<T>{
 			workbook.write(out);
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally {
+			try {
+				workbook.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
+	}
+	
+	@SuppressWarnings("deprecation")
+	@Override
+	public InputStream exportExcelInputStream(Collection<T> dataSet, String[] dataFields,
+			String[] columns, String timePattern) {
+		initService();
+		int index = 0;
+		XSSFFont font = workbook.createFont();
+		font.setColor(HSSFColor.BLACK.index);
+		XSSFRow row = export_sheet.createRow(0);
+		setHeaders(columns, row);
+		Iterator<T> it = dataSet.iterator();
+		while (it.hasNext()) {
+			rowCount++;
+			if((rowCount%65536)==0)
+			{
+				index = 0;
+				sheetCount++;
+				export_sheet = workbook.createSheet("sheet"+sheetCount);
+				XSSFRow row1 = export_sheet.createRow(0);
+				setHeaders(columns, row1);
+			}			
+			index++;
+			row = export_sheet.createRow(index);
+			T t = (T) it.next();
+			for (short i = 0; i < dataFields.length; i++) {
+				XSSFCell cell = row.createCell(i);
+				cell.setCellStyle(contentStyle);
+				Field field = null;
+				Class clazz = t.getClass();
+				for(;clazz!=Object.class;clazz = t.getClass().getSuperclass()){
+					try {
+						field = clazz.getDeclaredField(dataFields[i].trim());
+						break;
+					} catch (NoSuchFieldException e) {
+						
+					}
+				}
+				String fieldName = field.getName();
+				String getMethodName = "";
+				try {
+					Class<? extends Object> tCls = t.getClass();
+					Method getMethod = null;
+					String type = field.getGenericType().toString();
+					/*if (type.equals("class java.lang.Boolean")|| type.equals("boolean"))
+					{ 
+						getMethodName = "is" + getMethodName(fieldName);
+					} else {*/
+					getMethodName = getMethodName(fieldName);
+					//}
+					
+					try {
+						getMethod = tCls.getMethod("is" + getMethodName, new Class[] {});
+					} catch (Exception e) {
+						getMethod = tCls.getMethod("get" + getMethodName, new Class[] {});
+					}
+					Object value = getMethod.invoke(t, new Object[] {});
+					String textValue = null;
+					if (value instanceof Boolean) {
+						boolean bValue = (Boolean) value;
+						/*textValue = "是";
+						if (!bValue) {
+							textValue = "否";
+						}*/
+						textValue = "1";
+						if (!bValue) {
+							textValue = "0";
+						}
+					} else if (value instanceof Date) {
+						Date date = (Date) value;
+						SimpleDateFormat sdf = new SimpleDateFormat(timePattern);
+						textValue = sdf.format(date);
+					} else if (value instanceof byte[]) {
+						row.setHeightInPoints(60);
+						export_sheet.setColumnWidth(i, (short) (35.7 * 80));
+						byte[] bsValue = (byte[]) value;
+						HSSFClientAnchor anchor = new HSSFClientAnchor(0, 0,
+								1023, 255, (short) 6, index, (short) 6, index);
+						anchor.setAnchorType(2);
+						patriarch.createPicture(anchor, workbook.addPicture(
+								bsValue, HSSFWorkbook.PICTURE_TYPE_JPEG));
+					} else {
+						if(value==null)
+							textValue="";
+						else
+							textValue = value.toString();
+					}
+					if (textValue != null) {
+						Pattern p = Pattern.compile("^//d+(//.//d+)?{1}quot");
+						Matcher matcher = p.matcher(textValue);
+						if (matcher.matches()) {
+							cell.setCellValue(Double.parseDouble(textValue));
+						} else {
+							XSSFRichTextString richString = new XSSFRichTextString(
+									textValue);							
+							richString.applyFont(font);
+							cell.setCellValue(richString);
+						}
+					}
+				} catch (SecurityException e) {
+					e.printStackTrace();
+				} catch (NoSuchMethodException e) {
+					e.printStackTrace();
+				} catch (IllegalArgumentException e) {
+					e.printStackTrace();
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					e.printStackTrace();
+				} 
+			}
+		}
+		ByteArrayOutputStream os = null;
+		byte[] content = null;
+	    InputStream is = null;
+        try {
+        	os = new ByteArrayOutputStream();
+            workbook.write(os);
+            content =  os.toByteArray();
+            is = new ByteArrayInputStream(content);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+        	if(os!=null) {
+        		try {
+					os.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+        	}
+        	try {
+				workbook.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+        }
+
+        return is;
 	}
 
 	private static String getMethodName(String fieldName) {
@@ -442,12 +593,12 @@ public class POIServiceImpl<T> implements POIService<T>{
 	 * @param row
 	 */
 	@SuppressWarnings("deprecation")
-	private void setHeaders(String[] columns,HSSFRow row)
+	private void setHeaders(String[] columns,XSSFRow row)
 	{
 		for (short i = 0; i < columns.length; i++) {
-			HSSFCell cell = row.createCell(i);
+			XSSFCell cell = row.createCell(i);
 			cell.setCellStyle(headStyle);
-			HSSFRichTextString text = new HSSFRichTextString(columns[i]);
+			XSSFRichTextString text = new XSSFRichTextString(columns[i]);
 			cell.setCellValue(text);
 			export_sheet.setColumnWidth(i,(text.length()+2)*256*2);//以一个字符的1/256的宽度作为一个单位3000的话就是11.7左右，舍去小数点就是11个字符的宽度了。
 		}
