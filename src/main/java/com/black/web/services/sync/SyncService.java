@@ -8,7 +8,7 @@ public interface SyncService {
 	/**
 	 * 开始同步数据
 	 */
-	public void sync(List<GoodsEntity> data,String key) throws Exception;
+	public void sync(List<GoodsEntity> data,String key,Integer count) throws Exception;
 	/**
 	 * 停止同步方法
 	 */

@@ -16,7 +16,7 @@ import com.black.collect.entity.GoodsEntity;
 public class TaobaoSyncServiceImpl extends BaseSyncServiceImpl{
 
 	@Override
-	public void sync(List<GoodsEntity> data,String key) throws Exception {
+	public void sync(List<GoodsEntity> data,String key,Integer count) throws Exception {
 		System.setProperty("webdriver.chrome.driver", "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chromedriver.exe");
     	ChromeOptions options = new ChromeOptions();
 
@@ -40,7 +40,8 @@ public class TaobaoSyncServiceImpl extends BaseSyncServiceImpl{
         //获取所有商品节点  解析
         List<WebElement> items = driver.findElement(By.xpath("//*[@id=\"mainsrp-itemlist\"]/div/div/div[1]")).findElements(By.className("item"));
         items.forEach(item->{
-        	if(!shutdown) {
+        	//如果结束标记未结束  并且当前数据量小于规定数据量
+        	if(!shutdown && data.size() < count ) {
         		WebElement ctx = item.findElement(By.className("ctx-box"));
             	String price = ctx.findElement(By.className("price")).getText();
             	WebElement titleTag = ctx.findElement(By.className("title")).findElement(By.tagName("a"));
@@ -60,6 +61,8 @@ public class TaobaoSyncServiceImpl extends BaseSyncServiceImpl{
         	}
         });
         
+        driver.close();
+        driver.quit();
         //driver.findElement(By.xpath("//*[@id=\"J_Itemlist_TLink_522997440305\"]")).click();
 	}
 	

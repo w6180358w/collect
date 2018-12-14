@@ -17,13 +17,19 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.black.collect.entity.GoodsEntity;
 import com.black.web.base.bean.PageResponse;
+import com.black.web.base.enums.SyncEnum;
 import com.black.web.base.service.POIService;
+import com.black.web.models.bean.ThreadBean;
+import com.black.web.models.po.User;
 import com.google.gson.Gson;
 
 @RestController
@@ -40,6 +46,7 @@ public class TestController{
 	};
 	@Autowired
 	private POIService<T> poiService;
+	
 	@GetMapping("/load")
 	public String test(HttpServletResponse response,String name) throws Exception {
     	System.getProperties().setProperty("http.proxyHost", "222.73.68.144");  
@@ -151,4 +158,15 @@ public class TestController{
     	return "https://item.taobao.com/item.htm?id=" + id + "&style=grid";
     }
     
+    @PostMapping("/collect/{s}/{count}/{time}")
+	@ResponseBody
+	public String update(@RequestParam("mail") String mail,
+			@PathVariable("s") String s,
+			@PathVariable("count") Integer count,
+			@PathVariable("time") Integer time,
+			@RequestParam ("type")String type) throws Exception {
+		new ThreadBean(s, count, time, mail, SyncEnum.valueOf(type.toUpperCase())).start();
+        return new Gson().toJson(
+				new PageResponse<String>(true));
+    }
 }

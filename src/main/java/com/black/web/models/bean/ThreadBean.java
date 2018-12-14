@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.black.collect.entity.GoodsEntity;
+import com.black.web.Logger.Logger;
 import com.black.web.base.enums.SyncEnum;
 import com.black.web.base.exception.RaysException;
+import com.black.web.base.utils.mail.Mail;
 import com.black.web.services.sync.SyncService;
 
 public class ThreadBean extends Thread{
@@ -35,38 +37,57 @@ public class ThreadBean extends Thread{
 	//采集数据线程
 	@Override
 	public void run() {
-		endTime = startTime+time*60*1000;
 		ThreadBean that = this;
+		endTime = startTime+time*60*1000;
+		Logger.info("START:采集线程["+that.getName()+"]开始采集数据:[开始时间:{},目标站:{},目标采集数量:{},目标采集时间(分钟):{},发送邮箱:{}]",startTime,this.service,this.count,this.time,this.mail);
 		//开启时间监听线程
 		new Thread(()->{
+			Logger.info("-------------采集监控线程["+this.getName()+"]开启-------------");
 			//如果当前时间大于停止时间  调用shutdown方法
 			while(System.currentTimeMillis() <= endTime) {
-				System.out.println(endTime);
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 			}
-			System.out.println("----------------关闭采集线程------------------");
+			Logger.info("-------------当前时间大于规定采集结束时间，调用采集线程["+this.getName()+"]关闭方法-------------");
 			//采集服务的shutdown方法  shutdown逻辑自己实现
 			that.service.shutdown();
+			Logger.info("-------------采集监控线程["+this.getName()+"]关闭-------------");
 		}).start();
 		
 		//主线程开始采集程序
 		try {
-			this.service.sync(data,s);
+			this.service.sync(data,s,count);
 		} catch (Exception e) {
 			//结束时间控制为0  为了停止监听线程
-			System.out.println("采集报错,设置监听时间为0");
+			Logger.error("采集线程["+that.getName()+"]报错,设置监听时间为0");
 			endTime = 0l;
 			e.printStackTrace();
 		}
 		
 		//发送邮件（如果采集过程报错则添加内容  不报错带附件）
+		StringBuffer sb = new StringBuffer();
 		data.forEach(d->{
 			System.out.println(d.toString());
+			sb.append(d.toString()+"\n");
 		});
+		
+		Logger.info("-------------采集线程["+this.getName()+"]发送邮件,目标["+that.mail+"]------------");
+		try {
+			Mail mail = new Mail("smtp.qysoft.cn", "25", "xyzhang@qysoft.cn", "z5754784");
+			mail.setMailFrom("xyzhang@qysoft.cn");
+			mail.setMailTo(new String[]{"272416634@qq.com"}, "to");
+			mail.addTextContext("采集成功!"+"\n"+sb.toString());
+			mail.sendMail();
+			Logger.info("-------------采集线程["+this.getName()+"]发送邮件成功,目标["+that.mail+"]------------");
+		} catch (Exception e) {
+			Logger.error("-------------采集线程["+this.getName()+"]发送邮件失败------------");
+			e.printStackTrace();
+		}
+		endTime = 0l;
+		Logger.info("END:采集线程["+this.getName()+"]关闭,任务结束");
 	}
 
 	@Override
